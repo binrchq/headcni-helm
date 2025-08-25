@@ -1,0 +1,250 @@
+# HeadCNI K8s All-in-One Complete Values Configuration
+# Complete standard Kubernetes deployment configuration based on actual Helm Chart structure
+# 
+# Usage:
+# helm install headcni-k8s ./headcni-helm -f examples/headcni-k8s-allinone.yaml
+
+# =============================================================================
+# 1. Base Image Configuration
+# =============================================================================
+image:
+  repository: "binrc/headcni:latest"
+  pullPolicy: Always
+
+# =============================================================================
+# 2. Core Configuration
+# =============================================================================
+config:
+  # =============================================================================
+  # 2.1 Daemon Configuration
+  # =============================================================================
+  daemon:
+    logLevel: "info"              # Log level: debug, info, warn, error
+    hostNetwork: true             # Use host network mode
+  
+  # =============================================================================
+  # 2.2 HeadScale Configuration
+  # =============================================================================
+  headscale:
+    url: "https://your-headscale-server:8080"      # HeadScale server address
+    authKey: "YOUR_AUTH_KEY_HERE"                  # Authentication key
+    timeout: "30s"                                 # Connection timeout
+    retries: 3                                     # Retry count
+  
+  # =============================================================================
+  # 2.3 Tailscale Configuration
+  # =============================================================================
+  tailscale:
+    mode: "daemon"                                 # Operation mode: host or daemon
+    url: "https://your-headscale-server:8080"      # HeadScale server address
+    
+    socket:
+      name: "headcni_tailscale.sock"               # Socket file name
+      path: "/var/run/headcni/headcni_tailscale.sock"  # Socket file path
+    
+    hostname:
+      prefix: "headcni-k8s"                        # Hostname prefix
+      type: "hostname"                             # Hostname type: hostname or fqdn
+    
+    mtu: 1280                                      # Maximum Transmission Unit
+    acceptDNS: true                                # Accept HeadScale DNS settings
+    overrideLocalDNS: false                        # Override local DNS settings
+    interfaceName: "headcni01"                     # Tailscale interface name
+    user: "server"                                 # Tailscale username
+    tags:                                          # Node tags
+      - "tag:k8s-node"
+      - "tag:headcni"
+      - "tag:production"
+      - "tag:enterprise"
+  
+  # =============================================================================
+  # 2.4 Network Configuration
+  # =============================================================================
+  network:
+    podCIDR: "10.244.0.0/16"                       # Standard k8s default Pod CIDR
+    podCIDRSubnet: "/24"                           # Subnet size per node
+    serviceCIDR: "10.96.0.0/12"                    # Standard k8s default Service CIDR
+    mtu: 1280                                      # Network interface MTU
+    enableIPv6: false                              # Enable IPv6 support
+    enableNetworkPolicy: true                      # Enable network policy support
+  
+  # =============================================================================
+  # 2.5 IPAM Configuration
+  # =============================================================================
+  ipam:
+    type: "headcni-ipam"                           # IPAM type: host-local or headcni-ipam
+    strategy: "sequential"                          # IP allocation strategy: sequential, random, dense-pack
+    gcInterval: "1h"                               # Garbage collection interval
+  
+  # =============================================================================
+  # 2.6 DNS Configuration
+  # =============================================================================
+  dns:
+    magicDNS:
+      enabled: true                                # Enable MagicDNS (recommended in k8s environment)
+      nameservers:                                 # DNS server list
+        - "8.8.8.8"
+        - "8.8.4.4"
+        - "1.1.1.1"
+      searchDomains:                               # DNS search domains
+        - "cluster.local"
+        - "svc.cluster.local"
+        - "default.svc.cluster.local"
+      options:                                     # DNS resolution options
+        - "ndots:5"
+        - "timeout:2"
+        - "attempts:3"
+  
+  # =============================================================================
+  # 2.7 Monitoring Configuration
+  # =============================================================================
+  monitoring:
+    enabled: true                                  # Enable monitoring
+    port: 9001                                     # Monitoring port
+    path: "/metrics"                               # Metrics path
+  
+  # =============================================================================
+  # 2.8 Logging Configuration
+  # =============================================================================
+  logging:
+    level: "info"                                  # Log level: debug, info, warn, error
+    format: "json"                                 # Log format: json, text
+    output: "stdout"                               # Log output: stdout, stderr, file
+    file:
+      enabled: false                               # Enable file logging
+      path: "/var/log/headcni/headcni.log"         # Log file path
+      maxSize: "100MB"                             # Maximum log file size
+      maxBackups: 3                                # Maximum backup files
+      maxAge: "7d"                                 # Maximum file retention time
+  
+  # =============================================================================
+  # 2.9 Security Configuration
+  # =============================================================================
+  security:
+    tls:
+      enabled: false                               # Enable TLS
+      certFile: ""                                 # TLS certificate file path
+      keyFile: ""                                  # TLS private key file path
+      caFile: ""                                   # TLS CA certificate file path
+    auth:
+      enabled: false                               # Enable authentication
+      type: "token"                                # Authentication type: token, basic, oauth
+      token: ""                                    # Authentication token
+    networkPolicy:
+      enabled: true                                # Enable network policy
+      ingress: []                                  # Ingress rules
+      egress: []                                   # Egress rules
+  
+  # =============================================================================
+  # 2.10 Performance Configuration
+  # =============================================================================
+  performance:
+    connectionPool:
+      maxConnections: 100                          # Maximum connections
+      maxIdleConnections: 10                       # Maximum idle connections
+      connectionTimeout: "30s"                     # Connection timeout
+      idleTimeout: "90s"                           # Idle connection timeout
+    cache:
+      enabled: true                                # Enable cache
+      size: "100MB"                                # Cache size
+      ttl: "1h"                                    # Cache TTL
+    concurrency:
+      maxWorkers: 10                               # Maximum worker goroutines
+      queueSize: 100                               # Maximum queue size
+  
+  # =============================================================================
+  # 2.11 Advanced Permissions Configuration
+  # =============================================================================
+  advancedPermissions:
+    enabled: true                                  # Enable advanced permissions (pods, services, configmaps, endpoints)
+    description: "Advanced permissions are enabled for production k8s environment"
+
+# =============================================================================
+# 3. Kubernetes Resource Configuration
+# =============================================================================
+
+# ServiceAccount configuration
+serviceAccount:
+  create: true                                     # Create ServiceAccount
+  name: ""                                         # ServiceAccount name (leave empty for default)
+
+# Resource limits configuration
+resources:
+  # Manager component resource requirements
+  manager:
+    requests:
+      cpu: "100m"                                  # CPU request
+      memory: "128Mi"                              # Memory request
+    limits:
+      cpu: "200m"                                  # CPU limit
+      memory: "256Mi"                              # Memory limit
+      
+  # Metrics collection component resource requirements
+  metrics:
+    requests:
+      cpu: "50m"                                   # CPU request
+      memory: "64Mi"                               # Memory request
+    limits:
+      cpu: "100m"                                  # CPU limit
+      memory: "128Mi"                              # Memory limit
+
+# =============================================================================
+# 4. Scheduling Configuration
+# =============================================================================
+# Node selector
+nodeSelector: {}                                   # Node selector for specifying deployment nodes
+
+# Tolerations
+tolerations:                                       # Tolerations for running on tainted nodes
+  - operator: Exists
+    effect: NoSchedule
+
+# Priority class name
+priorityClassName: "system-node-critical"          # Priority class name
+
+# =============================================================================
+# 5. Deployment Instructions and Configuration Guide
+# =============================================================================
+# 
+# 1. Update configuration:
+#    - Replace "your-headscale-server" with actual HeadScale server address
+#    - Replace "YOUR_AUTH_KEY_HERE" with actual authentication key
+#
+# 2. Deployment command:
+#    helm install headcni-k8s ./headcni-helm -f examples/headcni-k8s-allinone.yaml
+#
+# 3. Verify deployment:
+#    kubectl get pods -n kube-system -l app=headcni
+#    kubectl logs -n kube-system -l app=headcni
+#
+# 4. Check CNI configuration:
+#    kubectl exec -n kube-system -c headcni-daemon <pod-name> -- cat /etc/cni/net.d/10-headcni.conflist
+#
+# 5. Test network connectivity:
+#    kubectl run test-pod --image=busybox --rm -it --restart=Never -- nslookup kubernetes.default
+#
+# 6. Check Tailscale status:
+#    kubectl exec -n kube-system -c headcni-daemon <pod-name> -- tailscale status
+#
+# 7. Access monitoring metrics:
+#    kubectl port-forward -n kube-system svc/headcni-metrics 9001:9001
+#    Then visit http://localhost:9001/metrics in browser
+#
+# 8. Check network policies:
+#    kubectl get networkpolicies --all-namespaces
+#    kubectl describe networkpolicy <policy-name> -n <namespace>
+#
+# 9. Troubleshooting:
+#    - Check HeadScale server connectivity
+#    - Verify authentication key is correct
+#    - Check Pod events and logs
+#    - Check CNI configuration and network interface status
+#    - Verify DNS resolution and MagicDNS configuration
+#    - Check network policies and firewall rules
+#
+# 10. Production environment recommendations:
+#     - Enable TLS encryption
+#     - Configure appropriate resource limits
+#     - Set up network policy rules
+#     - Configure log aggregation and monitoring alerts
+#     - Regular backup of configuration and status 
