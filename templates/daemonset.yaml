@@ -240,6 +240,7 @@ spec:
           runAsUser: 0
           privileged: true
       - name: setup-headcni-plugin
+              - name: setup-headcni-plugin
         image: "{{ .Values.image.cniPluginRepository }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
@@ -251,9 +252,13 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.labels['kubernetes.io/arch']
+          - name: CNI_BIN_DIR
+            value: "/opt/cni/bin"
         volumeMounts:
         - name: host-cni-bin
           mountPath: /opt/cni/bin
+        command: ["/entrypoint.sh"]
+        args: ["install"]
         securityContext:
           runAsNonRoot: false
           runAsUser: 0
