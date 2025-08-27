@@ -10,6 +10,8 @@ image:
   # Image repository address
   # Type: string | Required: true | Example: "binrc/headcni:latest"
   repository: "binrc/headcni:latest"
+  # cni plugin image
+  cniPluginRepository: "binrc/headcni-plugin:v1.0.0"
   
   # Image pull policy: Always, IfNotPresent, Never
   # Type: string | Default: "IfNotPresent"
@@ -225,7 +227,73 @@ config:
     description: "Advanced permissions are disabled by default for security"
 
 # =============================================================================
-# 3. Kubernetes Resource Configuration
+# 3 cni plugin chain configuration ( Optional )
+# Supports flexible configuration of any CNI plug-in
+# =============================================================================
+cniPlugins:
+  # 端口映射插件
+  - name: "portmap"
+    enabled: true
+    priority: 1
+    config: |
+      {
+        "type": "portmap",
+        "capabilities": {
+          "portMappings": true
+        },
+        "snat": true
+      }
+  # 带宽限制插件
+  - name: "bandwidth"
+    enabled: true
+    priority: 2
+    config: |
+      {
+        "type": "bandwidth",
+        "capabilities": {
+          "bandwidth": true
+        },
+        "ingressRate": 8000,
+        "ingressBurst": 16000,
+        "egressRate": 8000,
+        "egressBurst": 16000
+      }
+      
+      
+  # 防火墙插件
+  - name: "firewall"
+    enabled: false
+    priority: 3
+    config: |
+      {
+        "type": "firewall",
+        "backend": "iptables",
+        "rules": [
+          {
+            "action": "allow",
+            "protocol": "tcp",
+            "port": 80
+          }
+        ]
+      }
+      
+  # 自定义插件 - 完全自由的JSON配置
+  - name: "custom"
+    enabled: false
+    priority: 4
+    config: |
+      {
+        "type": "custom",
+        "customParam1": "value1",
+        "customParam2": "value2",
+        "nestedConfig": {
+          "key": "value",
+          "array": [1, 2, 3]
+        }
+      }
+
+# =============================================================================
+# 4. Kubernetes Resource Configuration
 # =============================================================================
 
 # ServiceAccount configuration
@@ -270,7 +338,7 @@ resources:
       memory: 128Mi              # Memory limit
 
 # =============================================================================
-# 4. Scheduling Configuration
+# 5. Scheduling Configuration
 # =============================================================================
 # - nodeSelector: Node selector for deployment nodes | Type: object | Default: {}
 # - tolerations: Tolerations for tainted nodes | Type: array | Default: [{"operator": "Exists", "effect": "NoSchedule"}]

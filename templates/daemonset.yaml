@@ -133,6 +133,16 @@ spec:
               searchDomains: []
               options: []
           
+          #附加插件
+          cniPlugins:
+          {{- if .Values.cniPlugins }}
+          {{- range .Values.cniPlugins }}
+          - name: {{ .name }}
+            priority: {{ .priority }}
+            enabled: {{ .enabled }}
+            config: {{ .config }}
+          {{- end }}
+          {{- end }}
           monitoring:
             enabled: {{ .Values.config.monitoring.enabled | default true }}
             port: {{ .Values.config.monitoring.port | default 9001 }}
@@ -225,6 +235,25 @@ spec:
           mountPath: /etc/headcni
         - name: runtime-config
           mountPath: /opt/headcni/config
+        securityContext:
+          runAsNonRoot: false
+          runAsUser: 0
+          privileged: true
+      - name: setup-headcni-plugin
+        image: "{{ .Values.image.cniPluginRepository }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+          - name: TARGETOS
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['kubernetes.io/os']
+          - name: TARGETARCH
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['kubernetes.io/arch']
+        volumeMounts:
+        - name: host-cni-bin
+          mountPath: /opt/cni/bin
         securityContext:
           runAsNonRoot: false
           runAsUser: 0
