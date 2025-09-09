@@ -240,7 +240,6 @@ spec:
           runAsUser: 0
           privileged: true
       - name: setup-headcni-plugin
-              - name: setup-headcni-plugin
         image: "{{ .Values.image.cniPluginRepository }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         env:
