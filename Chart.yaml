@@ -10,9 +10,17 @@ keywords:
   - tailscale
   - headscale
   - networking
-home: https://github.com/binrclab/headcni
+home: https://github.com/binrchq/headcni
 sources:
-  - https://github.com/binrclab/headcni
+  - https://github.com/binrchq/headcni
 maintainers:
-  - name: AI2O Team
-    email: ai2o@binrc.com
+  - name: binrc Team
+    email: hello@binrc.com
+annotations:
+  "helm.sh/chart-description": "HeadCNI is a Kubernetes CNI plugin that integrates Headscale and Tailscale"
+  "helm.sh/chart-notes": "HeadCNI is a Kubernetes CNI plugin that integrates Headscale and Tailscale"
+  "artifacthub.io/category": "networking"
+  "artifacthub.io/license": "MIT"
+  "artifacthub.io/operator": "true"
+  "artifacthub.io/prerequisites": "Kubernetes 1.20+"
+  "artifacthub.io/packageReadmeURL": "https://github.com/binrchq/headcni-helm/blob/main/README.md"
