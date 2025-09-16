@@ -338,6 +338,9 @@ spec:
         - name: headcni-data
           mountPath: /var/lib/headcni
           readOnly: false
+        # iptables lock file (for iptables-wrapper)
+        - name: xtables-lock
+          mountPath: /run/xtables.lock
         {{- if .Values.config.monitoring.enabled }}
         ports:
         - name: metrics
@@ -411,6 +414,11 @@ spec:
         hostPath:
           path: /var/lib/headcni
           type: DirectoryOrCreate
+      # iptables lock file (for iptables-wrapper)
+      - name: xtables-lock
+        hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
